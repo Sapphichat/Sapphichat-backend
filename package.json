@@ -1,0 +1,25 @@
+{
+  "type": "module",
+  "name": "sapphichat-backend",
+  "version": "0.0.1",
+  "description": "",
+  "homepage": "https://github.com/Sapphichat/Sapphichat-backend#readme",
+  "bugs": {
+    "url": "https://github.com/Sapphichat/Sapphichat-backend/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Sapphichat/Sapphichat-backend.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0"
+  }
+}

@@ -13,6 +13,11 @@ app.use(express.json());
 // Set up API routes
 app.use('/api', apiRoutes);
 
+// Expose static HTML page
+app.get('/', (req, res) => {
+    res.sendFile('index.html', { root: 'src/assets' });
+});
+
 app.listen(config.port, () => {
   console.log(`Server is running on port ${config.port}`);
 });

@@ -1,6 +1,6 @@
 import express from 'express';
 import config from './src/tools/config.js';
-import apiRoutes from './src/api/routes/index.js';
+import apiRoutes from './src/routes/index.js';
 import { syncDatabase, checkDatabaseStatus } from './src/tools/syncdb.js';
 
 const app = express();

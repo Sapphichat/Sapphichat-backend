@@ -2,12 +2,16 @@
 import express from 'express';
 import { body, validationResult } from 'express-validator';
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 // Import models
 import User from '../../../models/User.js';
-// Import middleware
-import { validateUserPassword } from '../../../middleware/index.js';
+import Session from '../../../models/Session.js';
 // Import tools
-import { generateUniqueId } from '../../../tools/generateId.js';
+import { generateUniqueId, validateUserPassword, config, successResponse, errorResponse } from '../../../tools/index.js';
+
+// Placeholder functions that need to be implemented
+const configDb = { allow_registration: true }; // TODO: Get from database settings
+const verifyTwoFaCode = (secret, code) => false; // TODO: Implement 2FA verification
 
 const router = express.Router();
 
@@ -28,31 +32,31 @@ router.post('/register', [
         .notEmpty().withMessage('Please allow our TOS to continue')
         .isBoolean().withMessage('TOS must be set to true')
 ],
-registerLimiter, 
 async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        return res.status(400).json(errorResponse('ERR_VALIDATION', 'Validation failed', { errors: errors.array() }));
+        return res.status(400).json(errorResponse('Validation failed', 'ERR_VALIDATION', { errors: errors.array() }));
     }
 
     const { username, displayname, password, tos } = req.body;
 
     if (!configDb.allow_registration) {
-        return res.status(403).json(errorResponse('ERR_REGISTRATION_DISABLED', 'Registration is currently disabled'));
+        return res.status(403).json(errorResponse('Registration is currently disabled', 'ERR_REGISTRATION_DISABLED'));
     }
 
     if (!tos === true) {
-        return res.status(400).json(errorResponse('ERR_TOS_REQUIRED', 'You must agree to our TOS'));
+        return res.status(400).json(errorResponse('You must agree to our TOS', 'ERR_TOS_REQUIRED'));
     }
 
     try {
+        let existingUser = null;
         if (username) {
             existingUser = await User.findOne({ where: { username } });
         }
 
         if (existingUser) {
             if (existingUser.username === username) {
-                return res.status(400).json(errorResponse('ERR_USERNAME_IN_USE', 'Username already in use'));
+                return res.status(400).json(errorResponse('Username already in use', 'ERR_USERNAME_IN_USE'));
             }
         }
 
@@ -62,44 +66,40 @@ async (req, res) => {
             id: generatedId,
             username,
             displayname,
-            password: hashedPassword
+            password: hashedPassword,
+            roleId: 'USER'
         });
-        res.status(201).json({ success: true, message: "Account created successfully" });
+        res.status(201).json(successResponse(null, "Account created successfully"));
     } catch (error) {
-        logger.error('Registration failed', {
-            error: error.message,
-            stack: error.stack,
-            userId: req.user ? req.user.id : null
-        });
-        res.status(500).json(errorResponse('ERR_INTERNAL_SERVER'));
+        res.status(500).json(errorResponse('Internal server error', 'ERR_INTERNAL_SERVER'));
     }
 });
 
 router.post('/login', [
-    body('username').notEmpty().withMessage('Username is required'),
+    body('identity').notEmpty().withMessage('Identity is required'),
     body('password').notEmpty().withMessage('Password is required')
-], loginLimiter, async (req, res) => {
+], async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        return res.status(400).json(errorResponse('ERR_VALIDATION', 'Validation failed', { errors: errors.array() }));
+        return res.status(400).json(errorResponse('Validation failed', 'ERR_VALIDATION', { errors: errors.array() }));
     }
 
-    const { username, password, twoFaCode } = req.body;
+    const { identity, password, twoFaCode } = req.body;
 
     try {
         const user = await User.findOne({
             where: {
-                username: username
+                username: identity
             }
         });
 
         let isValid = false;
         if (user) {
             if (user.isBanned) {
-                return res.status(403).json(errorResponse('ERR_BANNED', 'Your account is banned.', { banReason: user.banReason || "No reason provided" }));
+                return res.status(403).json(errorResponse('Your account is banned.', 'ERR_BANNED', { banReason: user.banReason || "No reason provided" }));
             }
             if (user.roleId === 'GUEST') {
-                return res.status(403).json(errorResponse('ERR_GUEST_CANNOT_LOGIN', 'Guest accounts cannot log in. Please claim your account first.'));
+                return res.status(403).json(errorResponse('Guest accounts cannot log in. Please claim your account first.', 'ERR_GUEST_CANNOT_LOGIN'));
             }
             isValid = await validateUserPassword(password, user, res);
         } else {
@@ -107,15 +107,15 @@ router.post('/login', [
         }
 
         if (!user || !isValid) {
-            return res.status(401).json(errorResponse('ERR_USERNAME_OR_PASSWORD_INCORRECT', 'Username or password is incorrect'));
+            return res.status(401).json(errorResponse('Username or password is incorrect', 'ERR_USERNAME_OR_PASSWORD_INCORRECT'));
         }
 
         if (user.isTwoFaEnabled) {
             if (!twoFaCode) {
-                return res.status(400).json(errorResponse('ERR_2FA_REQUIRED', '2FA code is required'));
+                return res.status(400).json(errorResponse('2FA code is required', 'ERR_2FA_REQUIRED'));
             }
             if (!verifyTwoFaCode(user.twoFaSecret, twoFaCode)) {
-                return res.status(401).json(errorResponse('ERR_INVALID_2FA', 'Invalid 2FA code'));
+                return res.status(401).json(errorResponse('Invalid 2FA code', 'ERR_INVALID_2FA'));
             }
         }
 
@@ -136,15 +136,10 @@ router.post('/login', [
             lastLoginAt: createdAt
         });
 
-        res.json({ success: true, authToken });
+        res.json(successResponse({ authToken }));
 
     } catch (error) {
-        logger.error('Registration failed', {
-            error: error.message,
-            stack: error.stack,
-            userId: req.user ? req.user.id : null
-        });
-        res.status(500).json(errorResponse('ERR_INTERNAL_SERVER'));
+        res.status(500).json(errorResponse('Internal server error', 'ERR_INTERNAL_SERVER'));
     }
 });
 

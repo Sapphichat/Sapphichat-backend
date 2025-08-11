@@ -1,6 +1,5 @@
 import sequelize, { testConnection } from './database.js';
-
-import * as models from '../models/index.js';
+import { Role } from '../models/index.js';
 
 /**
  * Database synchronization functions
@@ -36,9 +35,33 @@ export const closeDatabaseConnection = async () => {
     console.log('Database connection closed');
 };
 
+export const insertDefaultRoles = async () => {
+    try {
+        console.log('Inserting default roles...');
+
+        const roles = [
+            { id: 'ADMIN', name: 'Admin' },
+            { id: 'USER', name: 'User' }
+        ];
+
+        for (const r of roles) {
+            await Role.findOrCreate({
+                where: { id: r.id },
+                defaults: r
+            });
+        }
+
+        console.log('Default roles inserted successfully');
+    } catch (error) {
+        console.error('Error inserting default roles:', error.message);
+        throw error;
+    }
+};
+
 export const initializeDatabase = async () => {
     try {
         await syncDatabase({ force: true });
+        await insertDefaultRoles();
         console.log('Database initialized');
     } catch (error) {
         console.error('Database initialization error:', error.message);

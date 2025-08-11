@@ -4,6 +4,9 @@ dotenv.config();
 
 const port = process.env.PORT || 3000;
 
+// Session configuration
+const session_duration = process.env.SESSION_DURATION || 86400; // 24 hours in seconds by default
+
 // Database configuration with support for MariaDB, PostgreSQL, and SQLite
 const database = {
     dialect: process.env.DB_DIALECT || 'mariadb',
@@ -15,4 +18,4 @@ const database = {
     storage: process.env.DB_STORAGE || './database.sqlite' // For SQLite only
 };
 
-export default { port, database };
+export default { port, database, session_duration };

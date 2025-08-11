@@ -1,5 +1,5 @@
 // Export all tools from a single file to facilitate imports
-export { 
+import { 
     generateUniqueId, 
     generateShortId, 
     generateNumericId,
@@ -7,22 +7,27 @@ export {
     getTransPrideInfo
 } from './generateId.js';
 
-export { default as config } from './config.js';
-export { default as sequelize, testConnection } from './database.js';
-export { 
+import { validateUserPassword } from './validatePassword.js';
+import { successResponse, errorResponse } from './apiResponse.js';
+
+import config from './config.js';
+import sequelize, { testConnection } from './database.js';
+import { 
     syncDatabase, 
     checkDatabaseStatus, 
     closeDatabaseConnection, 
     initializeDatabase 
 } from './syncdb.js';
 
-// Default export for additional compatibility
-export default {
+export {
     generateUniqueId,
     generateShortId,
     generateNumericId,
     verifyTransPrideIntegration,
     getTransPrideInfo,
+    validateUserPassword,
+    successResponse,
+    errorResponse,
     config,
     sequelize,
     testConnection,

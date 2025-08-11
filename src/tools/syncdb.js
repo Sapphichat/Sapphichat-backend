@@ -1,5 +1,6 @@
 import sequelize, { testConnection } from './database.js';
 import { Role } from '../models/index.js';
+import configDb, { loadSettings, setSetting } from './configDb.js';
 
 /**
  * Database synchronization functions
@@ -67,4 +68,27 @@ export const initializeDatabase = async () => {
         console.error('Database initialization error:', error.message);
         throw error;
     }
+};
+
+/**
+ * Load dynamic settings from DB and seed defaults if absent.
+ * Keeps logic out of index.js for clarity.
+ */
+export const loadAndSeedDynamicSettings = async () => {
+    console.log('Loading dynamic settings...');
+    await loadSettings();
+
+    const defaults = [
+        { key: 'MAINTENANCE_MODE', value: false, type: 'boolean' },
+        { key: 'SERVER_STATE', value: 0, type: 'integer' }
+    ];
+
+    for (const d of defaults) {
+        if (configDb[d.key] === undefined) {
+            await setSetting(d.key, d.value, d.type);
+            console.log(`Seeded dynamic setting ${d.key}=${d.value}`);
+        }
+    }
+
+    return configDb;
 };

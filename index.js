@@ -1,7 +1,8 @@
 import express from 'express';
 import config from './src/tools/config.js';
 import apiRoutes from './src/routes/index.js';
-import { syncDatabase, checkDatabaseStatus, insertDefaultRoles } from './src/tools/syncdb.js';
+import { syncDatabase, checkDatabaseStatus, insertDefaultRoles, loadAndSeedDynamicSettings } from './src/tools/syncdb.js';
+import configDb from './src/tools/configDb.js';
 
 const app = express();
 
@@ -28,6 +29,9 @@ async function startServer() {
         }
 
         await insertDefaultRoles();
+
+    // Load & seed dynamic settings (moved to syncdb helper)
+    await loadAndSeedDynamicSettings();
 
         app.listen(config.port, () => {
             console.log(`Server running on port ${config.port}`);

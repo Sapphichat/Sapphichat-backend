@@ -11,12 +11,14 @@ import { validateUserPassword } from './validatePassword.js';
 import { successResponse, errorResponse } from './apiResponse.js';
 
 import config from './config.js';
+import configDb, { loadSettings as loadDynamicSettings } from './configDb.js';
 import sequelize, { testConnection } from './database.js';
 import { 
     syncDatabase, 
     checkDatabaseStatus, 
     closeDatabaseConnection, 
-    initializeDatabase 
+    initializeDatabase,
+    loadAndSeedDynamicSettings
 } from './syncdb.js';
 
 export {
@@ -29,10 +31,13 @@ export {
     successResponse,
     errorResponse,
     config,
+    configDb,
     sequelize,
     testConnection,
     syncDatabase,
     checkDatabaseStatus,
     closeDatabaseConnection,
-    initializeDatabase
+    initializeDatabase,
+    loadDynamicSettings,
+    loadAndSeedDynamicSettings
 };

@@ -1,6 +1,7 @@
 // Core dependencies
 import { config } from 'dotenv';
 import express from 'express';
+import configDb from '../tools/configDb.js';
 
 // Import routes
 import accountRouter from './api/account/index.js';
@@ -13,7 +14,8 @@ router.get('/', (req, res) => {
         {
             success: true,
             data: {
-                version: config.version
+                version: config.version,
+                maintenanceMode: configDb.MAINTENANCE_MODE
             }
         }
     );

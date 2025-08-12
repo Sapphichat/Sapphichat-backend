@@ -80,7 +80,8 @@ export const loadAndSeedDynamicSettings = async () => {
 
     const defaults = [
         { key: 'MAINTENANCE_MODE', value: false, type: 'boolean' },
-        { key: 'SERVER_STATE', value: 0, type: 'integer' }
+        { key: 'SERVER_STATE', value: 0, type: 'number' },
+        { key: 'ALLOW_REGISTRATION', value: true, type: 'boolean' }
     ];
 
     for (const d of defaults) {
